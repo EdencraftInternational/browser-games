@@ -1,0 +1,975 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Surf Duel</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #123047;
+      --foam: #f7fffb;
+      --sun: #ffd166;
+      --coral: #ef476f;
+      --teal: #00a6a6;
+      --sea: #087e8b;
+      --deep: #07526f;
+      --sand: #f4d35e;
+      --leaf: #4f772d;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      font-family: "Trebuchet MS", "Segoe UI", Arial, sans-serif;
+      color: var(--ink);
+      background: #bfeeff;
+    }
+
+    body {
+      display: grid;
+      place-items: stretch;
+    }
+
+    .game-shell {
+      position: relative;
+      min-width: 320px;
+      min-height: 100vh;
+      background:
+        linear-gradient(180deg, rgba(255, 209, 102, 0.95) 0 13%, rgba(135, 217, 226, 0.9) 13% 27%, transparent 27%),
+        linear-gradient(180deg, #48cae4 0%, #00a6a6 48%, #07526f 100%);
+      isolation: isolate;
+    }
+
+    canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      touch-action: none;
+    }
+
+    .hud {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      right: 12px;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: minmax(120px, 1fr) auto minmax(120px, 1fr);
+      gap: 10px;
+      align-items: start;
+      pointer-events: none;
+    }
+
+    .score {
+      min-height: 78px;
+      padding: 10px 12px;
+      border: 3px solid rgba(255, 255, 255, 0.86);
+      border-radius: 8px;
+      background: rgba(247, 255, 251, 0.82);
+      box-shadow: 0 8px 18px rgba(7, 82, 111, 0.18);
+      backdrop-filter: blur(4px);
+    }
+
+    .score.right {
+      text-align: right;
+    }
+
+    .name {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      font-size: 15px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .right .name {
+      justify-content: flex-end;
+    }
+
+    .dot {
+      width: 15px;
+      height: 15px;
+      border: 2px solid white;
+      border-radius: 50%;
+      box-shadow: 0 1px 0 rgba(0, 0, 0, 0.16);
+    }
+
+    .score-value {
+      margin-top: 3px;
+      font-size: clamp(26px, 5vw, 44px);
+      line-height: 1;
+      font-weight: 900;
+    }
+
+    .boost {
+      margin-top: 7px;
+      height: 8px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(18, 48, 71, 0.14);
+    }
+
+    .boost span {
+      display: block;
+      width: var(--boost, 0%);
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--teal), var(--sun));
+      transition: width 120ms linear;
+    }
+
+    .timer {
+      min-width: 96px;
+      padding: 10px 14px;
+      border: 3px solid rgba(255, 255, 255, 0.9);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.78);
+      box-shadow: 0 8px 18px rgba(7, 82, 111, 0.18);
+      text-align: center;
+      backdrop-filter: blur(4px);
+    }
+
+    .timer strong {
+      display: block;
+      font-size: clamp(24px, 4.6vw, 42px);
+      line-height: 1;
+    }
+
+    .timer span {
+      display: block;
+      margin-top: 3px;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .panel {
+      position: absolute;
+      z-index: 3;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      background: rgba(7, 82, 111, 0.24);
+    }
+
+    .panel[hidden] {
+      display: none;
+    }
+
+    .menu {
+      width: min(720px, calc(100vw - 32px));
+      padding: clamp(18px, 4vw, 30px);
+      border: 4px solid white;
+      border-radius: 8px;
+      background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(240, 255, 249, 0.92)),
+        radial-gradient(circle at 20% 20%, rgba(255, 209, 102, 0.45), transparent 36%);
+      box-shadow: 0 20px 40px rgba(5, 42, 62, 0.28);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(38px, 8vw, 72px);
+      line-height: 0.95;
+      letter-spacing: 0;
+      color: var(--deep);
+    }
+
+    .tagline {
+      margin: 10px 0 18px;
+      font-size: clamp(17px, 3vw, 22px);
+      font-weight: 800;
+      color: #24566c;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin: 16px 0 18px;
+    }
+
+    .control-box {
+      min-height: 118px;
+      padding: 13px;
+      border: 2px solid rgba(7, 82, 111, 0.22);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.65);
+    }
+
+    .control-box strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 15px;
+      text-transform: uppercase;
+    }
+
+    .keys {
+      display: grid;
+      grid-template-columns: repeat(3, 36px);
+      grid-auto-rows: 32px;
+      gap: 5px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .key {
+      display: grid;
+      place-items: center;
+      min-width: 32px;
+      height: 32px;
+      border: 2px solid rgba(18, 48, 71, 0.25);
+      border-bottom-width: 4px;
+      border-radius: 6px;
+      background: white;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .key.blank {
+      visibility: hidden;
+    }
+
+    .menu-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    button {
+      min-height: 46px;
+      padding: 0 18px;
+      border: 0;
+      border-radius: 8px;
+      background: var(--coral);
+      color: white;
+      box-shadow: 0 5px 0 #a72847;
+      font: inherit;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    button:hover,
+    button:focus-visible {
+      transform: translateY(-1px);
+      outline: 3px solid rgba(255, 209, 102, 0.9);
+      outline-offset: 3px;
+    }
+
+    button:active {
+      transform: translateY(3px);
+      box-shadow: 0 2px 0 #a72847;
+    }
+
+    .small-note {
+      margin: 8px 0 0;
+      font-size: 14px;
+      font-weight: 700;
+      color: #36566a;
+    }
+
+    .winner {
+      margin: 0 0 10px;
+      font-size: clamp(22px, 4vw, 32px);
+      font-weight: 900;
+      color: var(--leaf);
+    }
+
+    @media (max-width: 680px) {
+      .hud {
+        top: 8px;
+        left: 8px;
+        right: 8px;
+        grid-template-columns: 1fr 82px 1fr;
+        gap: 6px;
+      }
+
+      .score {
+        min-height: 66px;
+        padding: 8px;
+      }
+
+      .name {
+        font-size: 12px;
+      }
+
+      .timer {
+        min-width: 82px;
+        padding: 8px;
+      }
+
+      .controls {
+        grid-template-columns: 1fr;
+      }
+
+      .control-box {
+        min-height: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="game-shell" aria-label="Surf Duel two player surfing game">
+    <canvas id="game" width="1280" height="720"></canvas>
+
+    <section class="hud" aria-live="polite">
+      <div class="score">
+        <div class="name"><span class="dot" style="background:#ef476f"></span>Player 1</div>
+        <div class="score-value" id="p1Score">0</div>
+        <div class="boost" aria-label="Player 1 boost"><span id="p1Boost"></span></div>
+      </div>
+      <div class="timer"><strong id="timeLeft">60</strong><span>seconds</span></div>
+      <div class="score right">
+        <div class="name">Player 2<span class="dot" style="background:#118ab2"></span></div>
+        <div class="score-value" id="p2Score">0</div>
+        <div class="boost" aria-label="Player 2 boost"><span id="p2Boost"></span></div>
+      </div>
+    </section>
+
+    <section class="panel" id="startPanel">
+      <div class="menu">
+        <h1>Surf Duel</h1>
+        <p class="tagline">Two surfers, one sunny wave, lots of shells.</p>
+        <div class="controls">
+          <div class="control-box">
+            <strong>Player 1</strong>
+            <div class="keys" aria-label="W A S D controls">
+              <span class="key blank"></span><span class="key">W</span><span class="key blank"></span>
+              <span class="key">A</span><span class="key">S</span><span class="key">D</span>
+            </div>
+          </div>
+          <div class="control-box">
+            <strong>Player 2</strong>
+            <div class="keys" aria-label="Arrow key controls">
+              <span class="key blank"></span><span class="key">↑</span><span class="key blank"></span>
+              <span class="key">←</span><span class="key">↓</span><span class="key">→</span>
+            </div>
+          </div>
+        </div>
+        <div class="menu-row">
+          <button id="startButton" type="button">Start Surfing</button>
+          <p class="small-note">Collect shells and stars. Dodge reefs, logs, and crab buoys.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="endPanel" hidden>
+      <div class="menu">
+        <p class="winner" id="winnerText">Great surfing!</p>
+        <h1 id="finalScore">0 - 0</h1>
+        <p class="tagline" id="finalMessage">Ready for another wave?</p>
+        <div class="menu-row">
+          <button id="againButton" type="button">Play Again</button>
+          <p class="small-note">Press R any time to restart. Press Space to pause.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+
+    const hud = {
+      p1Score: document.getElementById("p1Score"),
+      p2Score: document.getElementById("p2Score"),
+      p1Boost: document.getElementById("p1Boost"),
+      p2Boost: document.getElementById("p2Boost"),
+      timeLeft: document.getElementById("timeLeft"),
+      startPanel: document.getElementById("startPanel"),
+      endPanel: document.getElementById("endPanel"),
+      winnerText: document.getElementById("winnerText"),
+      finalScore: document.getElementById("finalScore"),
+      finalMessage: document.getElementById("finalMessage")
+    };
+
+    const lanes = { left: 0, right: 0, top: 0, bottom: 0 };
+    const keys = new Set();
+    const collectables = [];
+    const hazards = [];
+    const splashes = [];
+    const clouds = Array.from({ length: 7 }, (_, i) => ({
+      x: Math.random(),
+      y: 0.08 + Math.random() * 0.16,
+      w: 80 + Math.random() * 80,
+      speed: 0.012 + Math.random() * 0.012,
+      puff: i % 3
+    }));
+
+    let surfers;
+    let running = false;
+    let paused = false;
+    let gameOver = false;
+    let last = 0;
+    let spawnTick = 0;
+    let collectibleTick = 0;
+    let wavePhase = 0;
+    let remaining = 60;
+
+    function resetGame() {
+      surfers = [
+        makeSurfer("p1", "#ef476f", "#ffd166", 0.36),
+        makeSurfer("p2", "#118ab2", "#b8f2e6", 0.64)
+      ];
+      collectables.length = 0;
+      hazards.length = 0;
+      splashes.length = 0;
+      spawnTick = 0;
+      collectibleTick = 0;
+      wavePhase = 0;
+      remaining = 60;
+      running = true;
+      paused = false;
+      gameOver = false;
+      last = performance.now();
+      hud.startPanel.hidden = true;
+      hud.endPanel.hidden = true;
+      updateHud();
+    }
+
+    function makeSurfer(id, suit, board, xPercent) {
+      return {
+        id,
+        x: canvas.width * xPercent,
+        y: canvas.height * 0.68,
+        vx: 0,
+        vy: 0,
+        size: 34,
+        color: suit,
+        board,
+        score: 0,
+        streak: 0,
+        boost: 0,
+        wobble: Math.random() * 10,
+        invincible: 0
+      };
+    }
+
+    function resize() {
+      const ratio = window.devicePixelRatio || 1;
+      const width = Math.max(320, window.innerWidth);
+      const height = Math.max(520, window.innerHeight);
+      canvas.width = Math.floor(width * ratio);
+      canvas.height = Math.floor(height * ratio);
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      lanes.left = Math.max(18, width * 0.08);
+      lanes.right = width - lanes.left;
+      lanes.top = Math.max(118, height * 0.22);
+      lanes.bottom = height - 44;
+      if (surfers) {
+        surfers[0].x = clamp(surfers[0].x, lanes.left, lanes.right);
+        surfers[1].x = clamp(surfers[1].x, lanes.left, lanes.right);
+        surfers.forEach(s => s.y = clamp(s.y, lanes.top, lanes.bottom));
+      }
+    }
+
+    function update(delta) {
+      if (!running || paused || gameOver) return;
+      remaining -= delta;
+      if (remaining <= 0) {
+        remaining = 0;
+        finishGame();
+        return;
+      }
+
+      wavePhase += delta * 2.4;
+      spawnTick -= delta;
+      collectibleTick -= delta;
+
+      if (spawnTick <= 0) {
+        spawnHazard();
+        spawnTick = 0.82 + Math.random() * 0.72;
+      }
+
+      if (collectibleTick <= 0) {
+        spawnCollectable();
+        collectibleTick = 0.48 + Math.random() * 0.5;
+      }
+
+      surfers.forEach((surfer, index) => updateSurfer(surfer, index, delta));
+      moveThings(collectables, delta);
+      moveThings(hazards, delta);
+      updateSplashes(delta);
+      checkCollisions();
+      updateHud();
+    }
+
+    function updateSurfer(surfer, index, delta) {
+      const p1 = surfer.id === "p1";
+      const left = p1 ? keys.has("KeyA") : keys.has("ArrowLeft");
+      const right = p1 ? keys.has("KeyD") : keys.has("ArrowRight");
+      const up = p1 ? keys.has("KeyW") : keys.has("ArrowUp");
+      const down = p1 ? keys.has("KeyS") : keys.has("ArrowDown");
+      const speed = 390 + surfer.boost * 2.8;
+      const drag = Math.pow(0.0008, delta);
+      const push = speed * delta;
+
+      if (left) surfer.vx -= push;
+      if (right) surfer.vx += push;
+      if (up) surfer.vy -= push;
+      if (down) surfer.vy += push;
+
+      surfer.vx *= drag;
+      surfer.vy *= drag;
+      surfer.x += surfer.vx * delta * 9;
+      surfer.y += surfer.vy * delta * 9;
+      surfer.y += Math.sin(wavePhase * 2 + index) * delta * 18;
+      surfer.x = clamp(surfer.x, lanes.left, lanes.right);
+      surfer.y = clamp(surfer.y, lanes.top, lanes.bottom);
+      surfer.boost = Math.max(0, surfer.boost - delta * 18);
+      surfer.invincible = Math.max(0, surfer.invincible - delta);
+      surfer.wobble += delta * 5;
+    }
+
+    function moveThings(items, delta) {
+      for (let i = items.length - 1; i >= 0; i--) {
+        const item = items[i];
+        item.y += item.speed * delta;
+        item.x += Math.sin(wavePhase + item.sway) * item.drift * delta;
+        item.spin += delta * item.turn;
+        if (item.y > window.innerHeight + 80) items.splice(i, 1);
+      }
+    }
+
+    function updateSplashes(delta) {
+      for (let i = splashes.length - 1; i >= 0; i--) {
+        const s = splashes[i];
+        s.life -= delta;
+        s.x += s.vx * delta;
+        s.y += s.vy * delta;
+        s.vy += 90 * delta;
+        if (s.life <= 0) splashes.splice(i, 1);
+      }
+    }
+
+    function spawnCollectable() {
+      const type = Math.random() > 0.82 ? "star" : "shell";
+      collectables.push({
+        type,
+        x: random(lanes.left + 24, lanes.right - 24),
+        y: lanes.top - 42,
+        r: type === "star" ? 18 : 15,
+        speed: random(115, 190),
+        drift: random(-28, 28),
+        sway: Math.random() * 10,
+        spin: 0,
+        turn: random(-3, 3),
+        value: type === "star" ? 8 : 3
+      });
+    }
+
+    function spawnHazard() {
+      const type = ["reef", "log", "buoy"][Math.floor(Math.random() * 3)];
+      hazards.push({
+        type,
+        x: random(lanes.left + 28, lanes.right - 28),
+        y: lanes.top - 58,
+        r: type === "log" ? 27 : 24,
+        speed: random(145, 235),
+        drift: random(-22, 22),
+        sway: Math.random() * 10,
+        spin: Math.random() * 10,
+        turn: random(-2, 2)
+      });
+    }
+
+    function checkCollisions() {
+      surfers.forEach(surfer => {
+        for (let i = collectables.length - 1; i >= 0; i--) {
+          const c = collectables[i];
+          if (distance(surfer.x, surfer.y, c.x, c.y) < surfer.size + c.r) {
+            collectables.splice(i, 1);
+            surfer.score += c.value + Math.min(10, surfer.streak);
+            surfer.streak += 1;
+            surfer.boost = Math.min(100, surfer.boost + 18);
+            burst(c.x, c.y, c.type === "star" ? "#ffd166" : "#f7fffb", 14);
+          }
+        }
+
+        if (surfer.invincible > 0) return;
+        for (let i = hazards.length - 1; i >= 0; i--) {
+          const h = hazards[i];
+          if (distance(surfer.x, surfer.y, h.x, h.y) < surfer.size + h.r - 6) {
+            hazards.splice(i, 1);
+            surfer.score = Math.max(0, surfer.score - 6);
+            surfer.streak = 0;
+            surfer.boost = 0;
+            surfer.invincible = 1.25;
+            surfer.vx *= -0.8;
+            surfer.vy *= -0.8;
+            burst(surfer.x, surfer.y, "#ffffff", 22);
+            break;
+          }
+        }
+      });
+    }
+
+    function burst(x, y, color, amount) {
+      for (let i = 0; i < amount; i++) {
+        splashes.push({
+          x,
+          y,
+          vx: random(-120, 120),
+          vy: random(-160, 55),
+          r: random(2, 6),
+          life: random(0.35, 0.75),
+          color
+        });
+      }
+    }
+
+    function draw() {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      drawSky(width, height);
+      drawWater(width, height);
+      drawLaneMarkers(width, height);
+      collectables.forEach(drawCollectable);
+      hazards.forEach(drawHazard);
+      surfers.forEach(drawSurfer);
+      drawSplashes();
+
+      if (paused && running && !gameOver) {
+        drawCenterMessage("Paused", "Space to surf again");
+      }
+    }
+
+    function drawSky(width, height) {
+      ctx.clearRect(0, 0, width, height);
+      const sky = ctx.createLinearGradient(0, 0, 0, height * 0.34);
+      sky.addColorStop(0, "#ffe08a");
+      sky.addColorStop(0.62, "#8bd7e6");
+      sky.addColorStop(1, "#4ecdc4");
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, width, height * 0.34);
+
+      ctx.fillStyle = "#ffd166";
+      ctx.beginPath();
+      ctx.arc(width - 82, 82, 38, 0, Math.PI * 2);
+      ctx.fill();
+
+      clouds.forEach(cloud => {
+        const x = ((cloud.x + wavePhase * cloud.speed) % 1.15) * width - cloud.w;
+        const y = cloud.y * height;
+        drawCloud(x, y, cloud.w, cloud.puff);
+      });
+    }
+
+    function drawCloud(x, y, w, puff) {
+      ctx.save();
+      ctx.fillStyle = "rgba(255,255,255,0.82)";
+      ctx.beginPath();
+      ctx.ellipse(x + w * 0.25, y + 12, w * 0.24, 17 + puff * 2, 0, 0, Math.PI * 2);
+      ctx.ellipse(x + w * 0.48, y + 5, w * 0.24, 22, 0, 0, Math.PI * 2);
+      ctx.ellipse(x + w * 0.72, y + 14, w * 0.25, 16, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawWater(width, height) {
+      const start = height * 0.24;
+      const water = ctx.createLinearGradient(0, start, 0, height);
+      water.addColorStop(0, "#38bdf8");
+      water.addColorStop(0.36, "#00a6a6");
+      water.addColorStop(1, "#07526f");
+      ctx.fillStyle = water;
+      ctx.fillRect(0, start, width, height - start);
+
+      for (let i = 0; i < 8; i++) {
+        const y = start + i * height * 0.105 + Math.sin(wavePhase + i) * 8;
+        ctx.strokeStyle = i % 2 ? "rgba(255,255,255,0.34)" : "rgba(184,242,230,0.42)";
+        ctx.lineWidth = i % 2 ? 4 : 2;
+        ctx.beginPath();
+        for (let x = -40; x <= width + 40; x += 22) {
+          const wobble = Math.sin(x * 0.018 + wavePhase * 2.4 + i) * 11;
+          if (x === -40) ctx.moveTo(x, y + wobble);
+          else ctx.lineTo(x, y + wobble);
+        }
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = "rgba(244,211,94,0.92)";
+      ctx.beginPath();
+      ctx.moveTo(0, height);
+      ctx.quadraticCurveTo(width * 0.3, height - 32, width, height - 18);
+      ctx.lineTo(width, height);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function drawLaneMarkers(width, height) {
+      ctx.strokeStyle = "rgba(255,255,255,0.28)";
+      ctx.lineWidth = 3;
+      ctx.setLineDash([10, 14]);
+      ctx.beginPath();
+      ctx.moveTo(width / 2, lanes.top - 8);
+      ctx.lineTo(width / 2, height - 54);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    function drawSurfer(s) {
+      ctx.save();
+      ctx.translate(s.x, s.y);
+      ctx.rotate(Math.sin(s.wobble) * 0.12 + s.vx * 0.0008);
+      if (s.invincible > 0 && Math.floor(s.invincible * 14) % 2 === 0) ctx.globalAlpha = 0.55;
+
+      ctx.fillStyle = "rgba(255,255,255,0.72)";
+      ctx.beginPath();
+      ctx.ellipse(0, 22, 48, 13, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = s.board;
+      ctx.strokeStyle = "#123047";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(0, 8, 18, 43, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = s.color;
+      roundRect(-14, -17, 28, 28, 8);
+      ctx.fill();
+
+      ctx.fillStyle = "#7a4f2a";
+      ctx.beginPath();
+      ctx.arc(0, -29, 12, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = "#123047";
+      ctx.lineWidth = 4;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(-12, -5);
+      ctx.lineTo(-27, 6 + Math.sin(s.wobble) * 4);
+      ctx.moveTo(12, -5);
+      ctx.lineTo(27, 6 - Math.sin(s.wobble) * 4);
+      ctx.moveTo(-8, 10);
+      ctx.lineTo(-18, 30);
+      ctx.moveTo(8, 10);
+      ctx.lineTo(18, 30);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawCollectable(c) {
+      ctx.save();
+      ctx.translate(c.x, c.y);
+      ctx.rotate(c.spin);
+      if (c.type === "star") {
+        ctx.fillStyle = "#ffd166";
+        ctx.strokeStyle = "#a96e00";
+        ctx.lineWidth = 2;
+        starPath(0, 0, c.r, c.r * 0.48, 5);
+        ctx.fill();
+        ctx.stroke();
+      } else {
+        ctx.fillStyle = "#fff8dc";
+        ctx.strokeStyle = "#b8860b";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, -c.r);
+        for (let i = 0; i <= 8; i++) {
+          const a = -Math.PI / 2 + i * Math.PI / 8;
+          const r = c.r * (i % 2 ? 0.78 : 1);
+          ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawHazard(h) {
+      ctx.save();
+      ctx.translate(h.x, h.y);
+      ctx.rotate(h.spin);
+      if (h.type === "reef") {
+        ctx.fillStyle = "#594a4e";
+        ctx.strokeStyle = "#312a2c";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(-28, 22);
+        ctx.lineTo(-16, -20);
+        ctx.lineTo(-2, 6);
+        ctx.lineTo(12, -26);
+        ctx.lineTo(30, 22);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "#b8f2e6";
+        ctx.fillRect(-4, -8, 7, 5);
+      } else if (h.type === "log") {
+        ctx.fillStyle = "#8f5b2e";
+        ctx.strokeStyle = "#4e321e";
+        ctx.lineWidth = 3;
+        roundRect(-34, -13, 68, 26, 13);
+        ctx.fill();
+        ctx.stroke();
+        ctx.strokeStyle = "rgba(255,255,255,0.3)";
+        ctx.beginPath();
+        ctx.moveTo(-18, -8);
+        ctx.lineTo(18, -8);
+        ctx.moveTo(-24, 4);
+        ctx.lineTo(23, 4);
+        ctx.stroke();
+      } else {
+        ctx.fillStyle = "#ef476f";
+        ctx.strokeStyle = "#123047";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(0, 0, 22, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = "white";
+        ctx.fillRect(-18, -4, 36, 8);
+      }
+      ctx.restore();
+    }
+
+    function drawSplashes() {
+      splashes.forEach(s => {
+        ctx.globalAlpha = Math.max(0, s.life * 1.6);
+        ctx.fillStyle = s.color;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+      });
+    }
+
+    function drawCenterMessage(title, subtitle) {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      ctx.save();
+      ctx.fillStyle = "rgba(7, 82, 111, 0.42)";
+      ctx.fillRect(0, 0, width, height);
+      ctx.fillStyle = "white";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.font = "900 58px Trebuchet MS, Arial";
+      ctx.fillText(title, width / 2, height / 2 - 20);
+      ctx.font = "800 22px Trebuchet MS, Arial";
+      ctx.fillText(subtitle, width / 2, height / 2 + 34);
+      ctx.restore();
+    }
+
+    function finishGame() {
+      gameOver = true;
+      running = false;
+      const [a, b] = surfers;
+      const winner = a.score === b.score ? "It's a beach draw!" : `${a.score > b.score ? "Player 1" : "Player 2"} wins the wave!`;
+      hud.winnerText.textContent = winner;
+      hud.finalScore.textContent = `${a.score} - ${b.score}`;
+      hud.finalMessage.textContent = a.score === b.score ? "Same score, same glory." : "High five the champion surfer.";
+      hud.endPanel.hidden = false;
+      updateHud();
+    }
+
+    function updateHud() {
+      if (!surfers) return;
+      hud.p1Score.textContent = surfers[0].score;
+      hud.p2Score.textContent = surfers[1].score;
+      hud.p1Boost.style.setProperty("--boost", `${surfers[0].boost}%`);
+      hud.p2Boost.style.setProperty("--boost", `${surfers[1].boost}%`);
+      hud.timeLeft.textContent = Math.ceil(remaining);
+    }
+
+    function loop(now) {
+      const delta = Math.min(0.033, (now - last) / 1000 || 0);
+      last = now;
+      update(delta);
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    function roundRect(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    function starPath(x, y, outer, inner, points) {
+      ctx.beginPath();
+      for (let i = 0; i < points * 2; i++) {
+        const r = i % 2 === 0 ? outer : inner;
+        const a = -Math.PI / 2 + i * Math.PI / points;
+        const px = x + Math.cos(a) * r;
+        const py = y + Math.sin(a) * r;
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+    }
+
+    function random(min, max) {
+      return min + Math.random() * (max - min);
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function distance(ax, ay, bx, by) {
+      return Math.hypot(ax - bx, ay - by);
+    }
+
+    window.addEventListener("resize", resize);
+    window.addEventListener("keydown", event => {
+      const code = event.code;
+      if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Space"].includes(code)) {
+        event.preventDefault();
+      }
+      if (code === "Space" && running && !gameOver) {
+        paused = !paused;
+        last = performance.now();
+        return;
+      }
+      if (code === "KeyR") {
+        resetGame();
+        return;
+      }
+      if (code === "Enter" && (!running || gameOver)) {
+        resetGame();
+        return;
+      }
+      keys.add(code);
+    });
+
+    window.addEventListener("keyup", event => {
+      keys.delete(event.code);
+    });
+
+    document.getElementById("startButton").addEventListener("click", resetGame);
+    document.getElementById("againButton").addEventListener("click", resetGame);
+
+    resize();
+    surfers = [
+      makeSurfer("p1", "#ef476f", "#ffd166", 0.36),
+      makeSurfer("p2", "#118ab2", "#b8f2e6", 0.64)
+    ];
+    updateHud();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

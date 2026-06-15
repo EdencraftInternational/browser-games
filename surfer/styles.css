@@ -1,0 +1,119 @@
+:root {
+  color-scheme: dark;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #072429;
+  color: #fffdf0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(255, 217, 125, 0.22), transparent 26%),
+    linear-gradient(135deg, #083c46, #0a7987 54%, #07323a);
+}
+
+.shell {
+  width: min(1160px, 100vw);
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto minmax(360px, 1fr) auto;
+  gap: 12px;
+  padding: 16px;
+}
+
+.topbar,
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.eyebrow {
+  margin: 0 0 4px;
+  color: #ffd66e;
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(2.2rem, 5vw, 4.4rem);
+  line-height: 0.9;
+}
+
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.stats span {
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 11px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  background: rgba(2, 39, 46, 0.72);
+  color: #e5fbff;
+  white-space: nowrap;
+}
+
+.stats b {
+  color: #ffd66e;
+}
+
+button {
+  height: 40px;
+  border: 0;
+  border-radius: 8px;
+  padding: 0 15px;
+  background: #ffd66e;
+  color: #18200d;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #ffe49b;
+}
+
+#game {
+  width: 100%;
+  height: 100%;
+  min-height: 430px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  background: #0b8391;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.34);
+}
+
+.controls {
+  color: #e4fbfd;
+  font-size: 0.9rem;
+}
+
+kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 6px;
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, 0.24);
+  color: #fff;
+  font: 800 0.78rem/1 Inter, sans-serif;
+}

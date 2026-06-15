@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Surfer</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Beach run</p>
+          <h1>Surfer</h1>
+        </div>
+        <div class="stats" aria-live="polite">
+          <span><b id="score">0</b> score</span>
+          <span><b id="stoke">100</b>% stoke</span>
+          <span><b id="wave">1</b> wave</span>
+          <span><b id="time">90</b>s</span>
+        </div>
+        <button id="restart" type="button">Restart</button>
+      </header>
+
+      <canvas id="game" width="1200" height="720" aria-label="Surfer game"></canvas>
+
+      <footer class="controls">
+        <span><kbd>W</kbd>/<kbd>S</kbd> or <kbd>↑</kbd>/<kbd>↓</kbd> carve</span>
+        <span><kbd>A</kbd>/<kbd>D</kbd> trim speed</span>
+        <span><kbd>Space</kbd> trick on the lip</span>
+        <span>Stay in the pocket, avoid driftwood, chain tricks.</span>
+      </footer>
+    </main>
+    <script src="game.js"></script>
+  </body>
+</html>

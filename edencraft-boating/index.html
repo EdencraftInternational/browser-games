@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Edencraft Owner Run</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="app" aria-label="Edencraft Owner Run game">
+      <section class="brandbar" aria-label="Game header">
+        <div class="brandmark" aria-label="Edencraft">
+          <span class="brand-symbol">E</span>
+          <span>
+            <span class="brand-name">EDENCRAFT</span>
+            <span class="brand-line">Ride The Legend</span>
+          </span>
+        </div>
+        <div class="run-stats" aria-live="polite">
+          <span><b id="score">0</b> legacy pts</span>
+          <span><b id="fish">0</b> fish</span>
+          <span><b id="fuel">100</b>% fuel</span>
+          <span><b id="time">120</b>s</span>
+        </div>
+        <button id="restart" type="button">New Run</button>
+      </section>
+
+      <section class="layout">
+        <aside class="panel setup-panel" aria-label="Boat selection">
+          <div class="panel-heading">
+            <p class="eyebrow">Choose your hull</p>
+            <h1>Owner Run</h1>
+          </div>
+          <div class="boat-list" id="boatList"></div>
+          <div class="briefing">
+            <p class="eyebrow">Briefing</p>
+            <p id="briefingText">Run the marks, fish the grounds, and get home clean.</p>
+          </div>
+        </aside>
+
+        <section class="game-stage" aria-label="Game stage">
+          <canvas id="game" width="1400" height="860" aria-label="Playable Edencraft boating game"></canvas>
+          <div class="mission-strip" aria-live="polite">
+            <span id="mission">Loading mission...</span>
+            <span id="seaState">Sea: clean</span>
+            <span id="trimReadout">Trim: 50%</span>
+          </div>
+        </section>
+
+        <aside class="panel owner-panel" aria-label="Owner dashboard">
+          <div>
+            <p class="eyebrow">Owner dash</p>
+            <h2 id="boatName">233 Formula Classic</h2>
+            <p id="boatTagline">Legendary deep V confidence offshore.</p>
+          </div>
+
+          <div class="gauge-group">
+            <label>
+              <span>Trim</span>
+              <input id="trim" type="range" min="0" max="100" value="50">
+            </label>
+            <label>
+              <span>Sounder focus</span>
+              <input id="sounder" type="range" min="0" max="100" value="62">
+            </label>
+          </div>
+
+          <div class="objective-list" id="objectives"></div>
+
+          <div class="owner-note">
+            <p id="ownerNote">Owners know the run is won by reading the water, not just holding it flat.</p>
+          </div>
+        </aside>
+      </section>
+
+      <section class="controls" aria-label="Controls">
+        <span><kbd>W</kbd>/<kbd>↑</kbd> throttle</span>
+        <span><kbd>S</kbd>/<kbd>↓</kbd> ease off</span>
+        <span><kbd>A</kbd><kbd>D</kbd> or <kbd>←</kbd><kbd>→</kbd> steer</span>
+        <span><kbd>Space</kbd> fish when on a mark</span>
+        <span>Touch: drag above the boat to steer and throttle.</span>
+      </section>
+    </main>
+
+    <script src="game.js"></script>
+  </body>
+</html>
